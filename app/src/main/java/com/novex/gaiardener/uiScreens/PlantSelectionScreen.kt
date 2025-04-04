@@ -2,28 +2,34 @@ package com.novex.gaiardener.uiScreens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.novex.gaiardener.uiScreens.components.CircularIcon
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import com.novex.gaiardener.R
+import com.novex.gaiardener.data.entities.Plant
+import com.novex.gaiardener.viewModel.PlantViewModel
+import com.novex.gaiardener.uiScreens.components.CircularIcon
+import com.novex.gaiardener.uiScreens.components.getDrawableResource
+
 @Composable
-fun PlantSelectionScreen(navController: NavController) {
+fun PlantSelectionScreen(navController: NavController, plantViewModel: PlantViewModel) {
     var searchQuery by remember { mutableStateOf(TextFieldValue("")) }
+    val plants by plantViewModel.plants.collectAsState(emptyList()) // Se actualiza automáticamente
 
     Box(
         modifier = Modifier
@@ -33,11 +39,9 @@ fun PlantSelectionScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal= 10.dp, vertical = 35.dp)
-                .verticalScroll(rememberScrollState()) // Habilita el scroll
+                .padding(horizontal = 10.dp, vertical = 35.dp)
         ) {
             Spacer(modifier = Modifier.height(20.dp))
-
 
             Text(
                 text = "¡EMPECEMOS!",
@@ -48,16 +52,14 @@ fun PlantSelectionScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Barra de búsqueda con texto y lupa
+            // Barra de búsqueda con lupa
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color.White, shape = RoundedCornerShape(20.dp))
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     BasicTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
@@ -80,7 +82,7 @@ fun PlantSelectionScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Texto de bienvenida
+            // Texto informativo
             Text(
                 text = "Bienvenido a la selección de plantas!\nContamos con una base de datos con más de 500 plantas, para comenzar:\n\n" +
                         "- Busca la planta que desees testear\n- Selecciónala y sigue el paso a paso para obtener los mejores resultados",
@@ -91,63 +93,31 @@ fun PlantSelectionScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Tarjetas de plantas con scroll
-            Column(
+            // Lista de plantas usando LazyColumn
+            LazyColumn(
+
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
-                repeat(10) { index ->
-                    val plantName = "Planta $index"
-                    val scientificName = "Scientia $index"
-                    val description = "Descripción de la planta $index. lorem ipsum..."
-                    val imageRes = R.drawable.plantcard
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        onClick = {
-                            navController.navigate(
-                                "plant_detail/$plantName/$scientificName/$description/$imageRes"
-                            )
-                        }
-                    ) {
-                        Column {
-                            Image(
-                                painter = painterResource(id = imageRes),
-                                contentDescription = "Imagen de la planta",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp),
-                                contentScale = ContentScale.Crop
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = plantName,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            )
-                            Text(
-                                text = "Información base sobre la planta...",
-                                fontSize = 14.sp,
-                                color = Color.Gray,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                            )
-                        }
+                items(plants) { plant ->
+                    PlantCard(plant, navController)
+                }
+                if (plants.isEmpty()) {
+                    item {
+                        Text(
+                            "No se encontraron plantas.",
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
-
             }
         }
 
-        // Botón de regreso 
+        // Botón de regreso
         Box(
-            modifier = Modifier.fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical=45.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 45.dp),
             contentAlignment = Alignment.TopEnd
-
         ) {
             CircularIcon(
                 iconResId = R.drawable.ic_back,
@@ -157,7 +127,52 @@ fun PlantSelectionScreen(navController: NavController) {
                 iconSize = 24,
                 onClick = { navController.popBackStack() }
             )
-
         }
     }
 }
+
+
+// Composable para la tarjeta de planta
+@Composable
+fun PlantCard(plant: Plant, navController: NavController) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable {
+                plant.plantId?.let { id ->
+                    navController.navigate("plant_detail/$id")
+                }
+            },
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column {
+            val imageRes = getDrawableResource(plant.imagenes.firstOrNull() ?: "default_image.png")
+
+            Image(
+                painter = painterResource(id = imageRes),
+                contentDescription = "Imagen de ${plant.nombre}",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = plant.nombre,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            Text(
+                text = plant.datosGenerales ?: "Información no disponible",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+        }
+    }
+}
+
+
+

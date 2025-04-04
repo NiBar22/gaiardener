@@ -1,39 +1,35 @@
 package com.novex.gaiardener.uiScreens
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavType
+import com.novex.gaiardener.viewModel.PlantViewModel
+import com.novex.gaiardener.viewModel.PlantViewModelFactory
+import com.novex.gaiardener.data.repository.PlantRepository
+
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun NavGraph(navController: NavHostController, repository: PlantRepository) {
+    val factory = PlantViewModelFactory(repository)
+    val plantViewModel: PlantViewModel = viewModel(factory = factory)
+
     NavHost(
         navController = navController,
         startDestination = "homeScreen"
     ) {
         composable("homeScreen") { HomeScreen(navController) }
-        composable("plantSelectionScreen") { PlantSelectionScreen(navController) }
+        composable("plantSelectionScreen") { PlantSelectionScreen(navController, plantViewModel) }
 
-        // PlantDetailScreen con argumentos
         composable(
-            "plant_detail/{plantName}/{scientificName}/{description}/{imageRes}",
-            arguments = listOf(
-                navArgument("plantName") { type = NavType.StringType },
-                navArgument("scientificName") { type = NavType.StringType },
-                navArgument("description") { type = NavType.StringType },
-                navArgument("imageRes") { type = NavType.IntType }
-            )
+            "plant_detail/{plantId}",
+            arguments = listOf(navArgument("plantId") { type = NavType.IntType })
         ) { backStackEntry ->
-            PlantDetailScreen(
-                navController,
-                plantName = backStackEntry.arguments?.getString("plantName") ?: "",
-                scientificName = backStackEntry.arguments?.getString("scientificName") ?: "",
-                description = backStackEntry.arguments?.getString("description") ?: "",
-                imageRes = backStackEntry.arguments?.getInt("imageRes") ?: 0
-            )
+            val plantId = backStackEntry.arguments?.getInt("plantId") ?: -1
+            PlantDetailScreen(navController, plantId, plantViewModel)
         }
     }
 }

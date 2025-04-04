@@ -81,7 +81,39 @@ fun HomeScreen(navController: NavController, bluetoothViewModel: BluetoothViewMo
 
     val bluetoothDevicePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
-    ) {}
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val device: BluetoothDevice? = result.data?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+            device?.let {
+                BluetoothManager.connectToDevice(it)
+                bluetoothViewModel.connectedDevice = it.name
+                bluetoothViewModel.isConnected = true
+                Toast.makeText(context, "Conectado a ${it.name}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    val bluetoothPermissions = arrayOf(
+        android.Manifest.permission.BLUETOOTH_SCAN,
+        android.Manifest.permission.BLUETOOTH_CONNECT
+    )
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        if (!allGranted) {
+            Toast.makeText(context, "Se requieren permisos de Bluetooth", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    fun checkBluetoothPermissions(): Boolean {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) return true // No se necesitan permisos
+
+        return bluetoothPermissions.all {
+            androidx.core.content.ContextCompat.checkSelfPermission(context, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+    }
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color(0xFF7BA05B)),
@@ -129,6 +161,11 @@ fun HomeScreen(navController: NavController, bluetoothViewModel: BluetoothViewMo
                     iconSize = 60,
                     modifier = Modifier.offset(x = (120).dp, y = (-90).dp),
                     onClick = {
+                        if (!checkBluetoothPermissions()) {
+                            permissionLauncher.launch(bluetoothPermissions)
+                            return@CircularIcon
+                        }
+
                         val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
                         if (bluetoothAdapter == null) {
                             Toast.makeText(context, "Bluetooth no soportado", Toast.LENGTH_SHORT).show()
@@ -145,6 +182,7 @@ fun HomeScreen(navController: NavController, bluetoothViewModel: BluetoothViewMo
                             bluetoothDevicePickerLauncher.launch(intent)
                         }
                     }
+
                 )
             }
 

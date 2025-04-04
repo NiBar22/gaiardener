@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -43,6 +44,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1") // ViewModel para Jetpack Compose
     implementation("androidx.navigation:navigation-compose:2.6.0") // Navegación en Compose
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
+    implementation("com.google.code.gson:gson:2.10.1") // Última versión estable
+    ksp("androidx.room:room-compiler:2.5.0")
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
