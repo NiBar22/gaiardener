@@ -10,6 +10,8 @@ import com.novex.gaiardener.data.repository.PlantRepository
 import com.novex.gaiardener.ui.theme.GaiardenerTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import com.novex.gaiardener.uiScreens.navigation.NavGraph
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

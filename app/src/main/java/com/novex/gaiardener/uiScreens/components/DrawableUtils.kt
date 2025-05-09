@@ -6,9 +6,14 @@ fun getDrawableResource(imageName: String?): Int {
     return when (imageName?.removeSuffix(".jpg")) { // 🔥 Eliminamos la extensión .jpg
         "cactus" -> R.drawable.cactus
         "aloe_vera" -> R.drawable.aloe_vera
-        "bonsai" -> R.drawable.bonsai
-        "helecho" -> R.drawable.helecho
-        "orquidea" -> R.drawable.orquidea
+        "lavanda" -> R.drawable.lavanda
+        "girasol" -> R.drawable.girasol
+        "menta" -> R.drawable.menta
+        "tomatera" -> R.drawable.tomatera
+        "bambu" -> R.drawable.bambu
+        "suculenta" -> R.drawable.suculenta
+        "romero" -> R.drawable.romero
+        "margarita" -> R.drawable.margarita
         else -> R.drawable.default_image
     }
 }

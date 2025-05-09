@@ -19,12 +19,26 @@ import com.novex.gaiardener.R
 import com.novex.gaiardener.viewModel.PlantViewModel
 import com.novex.gaiardener.uiScreens.components.CircularIcon
 import com.novex.gaiardener.uiScreens.components.getDrawableResource
+import com.novex.gaiardener.uiScreens.LoadingScreen
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+
 
 @Composable
 fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel: PlantViewModel) {
+    var showScanDialog by remember { mutableStateOf(false) }
     val selectedPlant by plantViewModel.selectedPlant.collectAsState()
 
-    // Llamar a getPlantById solo cuando cambia el plantId
+    if (showScanDialog && selectedPlant != null) {
+        LoadingScreen(
+            onDismiss = { showScanDialog = false },
+            plantName = selectedPlant!!.nombre
+        ) { ph, humedad, temperatura ->
+            showScanDialog = false
+            navController.navigate("scanResult/${plantId}/$ph/$humedad/$temperatura/0")
+        }
+    }
+
     LaunchedEffect(plantId) {
         plantViewModel.getPlantById(plantId)
     }
@@ -37,14 +51,13 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Botón de regreso
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 30.dp),
+                    .padding(top = 16.dp),
                 contentAlignment = Alignment.TopEnd
             ) {
                 CircularIcon(
@@ -59,118 +72,114 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Manejo del estado de carga
             if (selectedPlant == null) {
                 CircularProgressIndicator(color = Color.White)
             } else {
                 val plant = selectedPlant!!
-
-                // Obtener la imagen correcta
                 val imageRes = getDrawableResource(plant.imagenes.firstOrNull())
 
-                // Nombre de la planta
-                Text(
-                    text = plant.nombre.uppercase(),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Tarjeta con la información de la planta
-                Card(
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column {
-                        Image(
-                            painter = painterResource(id = imageRes),
-                            contentDescription = "Imagen de ${plant.nombre}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp),
-                            contentScale = ContentScale.Crop
-                        )
+                    Text(
+                        text = plant.nombre.uppercase(),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column {
+                            Image(
+                                painter = painterResource(id = imageRes),
+                                contentDescription = "Imagen de ${plant.nombre}",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp),
+                                contentScale = ContentScale.Crop
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = plant.nombreCientifico,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.Gray
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Text(
+                                    text = plant.datosGenerales ?: "Información no disponible",
+                                    fontSize = 14.sp,
+                                    color = Color.DarkGray
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            // Nombre científico
-                            Text(
-                                text = plant.nombreCientifico,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.Gray
-                            )
+                            if (!plant.datosCuriosos.isNullOrEmpty()) {
+                                Text(
+                                    text = "🌱 Datos Curiosos",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF7BA05B)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = plant.datosCuriosos,
+                                    fontSize = 14.sp,
+                                    color = Color.DarkGray
+                                )
+                            }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                            // Descripción de la planta
-                            Text(
-                                text = plant.datosGenerales ?: "Información no disponible",
-                                fontSize = 14.sp,
-                                color = Color.DarkGray
-                            )
+                            if (!plant.recomendaciones.isNullOrEmpty()) {
+                                Text(
+                                    text = "💡 Recomendaciones",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF7BA05B)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = plant.recomendaciones,
+                                    fontSize = 14.sp,
+                                    color = Color.DarkGray
+                                )
+                            }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 🔥 Nueva tarjeta con "Datos Curiosos" y "Recomendaciones"
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        // Datos curiosos
-                        if (!plant.datosCuriosos.isNullOrEmpty()) {
-                            Text(
-                                text = "🌱 Datos Curiosos",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF7BA05B)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = plant.datosCuriosos,
-                                fontSize = 14.sp,
-                                color = Color.DarkGray
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Recomendaciones
-                        if (!plant.recomendaciones.isNullOrEmpty()) {
-                            Text(
-                                text = "💡 Recomendaciones",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF7BA05B)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = plant.recomendaciones,
-                                fontSize = 14.sp,
-                                color = Color.DarkGray
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Botón ESCANEAR
                 Button(
-                    onClick = { /* funcionalidad con el Arduino */ },
+                    onClick = { showScanDialog = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCFB53B)),
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier
@@ -183,6 +192,3 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
         }
     }
 }
-
-
-

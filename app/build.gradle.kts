@@ -46,6 +46,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
     implementation("com.google.code.gson:gson:2.10.1") // Última versión estable
     ksp("androidx.room:room-compiler:2.5.0")
+    implementation("io.coil-kt:coil-compose:2.4.0")
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.androidx.core.ktx)
