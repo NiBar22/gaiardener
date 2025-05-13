@@ -14,6 +14,7 @@ fun getDrawableResource(imageName: String?): Int {
         "suculenta" -> R.drawable.suculenta
         "romero" -> R.drawable.romero
         "margarita" -> R.drawable.margarita
+        "millonaria" -> R.drawable.millonaria
         else -> R.drawable.default_image
     }
 }

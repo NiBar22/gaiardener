@@ -47,6 +47,9 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1") // Última versión estable
     ksp("androidx.room:room-compiler:2.5.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("androidx.compose.animation:animation")
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.androidx.core.ktx)

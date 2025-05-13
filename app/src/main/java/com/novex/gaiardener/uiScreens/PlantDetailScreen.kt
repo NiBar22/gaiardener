@@ -3,13 +3,15 @@ package com.novex.gaiardener.uiScreens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -17,27 +19,16 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.novex.gaiardener.R
 import com.novex.gaiardener.viewModel.PlantViewModel
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import com.novex.gaiardener.uiScreens.components.CircularIcon
 import com.novex.gaiardener.uiScreens.components.getDrawableResource
-import com.novex.gaiardener.uiScreens.LoadingScreen
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.rememberScrollState
-
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
 fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel: PlantViewModel) {
     var showScanDialog by remember { mutableStateOf(false) }
     val selectedPlant by plantViewModel.selectedPlant.collectAsState()
-
-    if (showScanDialog && selectedPlant != null) {
-        LoadingScreen(
-            onDismiss = { showScanDialog = false },
-            plantName = selectedPlant!!.nombre
-        ) { ph, humedad, temperatura ->
-            showScanDialog = false
-            navController.navigate("scanResult/${plantId}/$ph/$humedad/$temperatura/0")
-        }
-    }
 
     LaunchedEffect(plantId) {
         plantViewModel.getPlantById(plantId)
@@ -47,13 +38,9 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF7BA05B))
+            .padding(WindowInsets.navigationBars.asPaddingValues())
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -70,18 +57,25 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
             if (selectedPlant == null) {
-                CircularProgressIndicator(color = Color.White)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color.White)
+                }
             } else {
                 val plant = selectedPlant!!
                 val imageRes = getDrawableResource(plant.imagenes.firstOrNull())
 
                 Column(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .weight(1f)
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -94,9 +88,7 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
@@ -109,9 +101,7 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
                                     .height(180.dp),
                                 contentScale = ContentScale.Crop
                             )
-
                             Spacer(modifier = Modifier.height(12.dp))
-
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Text(
                                     text = plant.nombreCientifico,
@@ -119,9 +109,7 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
                                     fontWeight = FontWeight.Medium,
                                     color = Color.Gray
                                 )
-
                                 Spacer(modifier = Modifier.height(8.dp))
-
                                 Text(
                                     text = plant.datosGenerales ?: "Información no disponible",
                                     fontSize = 14.sp,
@@ -134,16 +122,14 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             if (!plant.datosCuriosos.isNullOrEmpty()) {
                                 Text(
-                                    text = "🌱 Datos Curiosos",
+                                    text = "🌿 Datos Curiosos",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF7BA05B)
@@ -183,11 +169,24 @@ fun PlantDetailScreen(navController: NavController, plantId: Int, plantViewModel
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFCFB53B)),
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(16.dp)
                         .fillMaxWidth(0.6f)
                         .height(50.dp)
                 ) {
                     Text(text = "ESCANEAR", fontSize = 16.sp, color = Color.White)
                 }
+            }
+        }
+
+        // 👇 Overlay de LoadingScreen cuando showScanDialog es true
+        if (showScanDialog && selectedPlant != null) {
+            LoadingScreen(
+                onDismiss = { showScanDialog = false },
+                plantName = selectedPlant!!.nombre
+            ) { ph, humedad, temperatura ->
+                showScanDialog = false
+                navController.navigate("scanResult/${plantId}/$ph/$humedad/$temperatura/0")
             }
         }
     }
